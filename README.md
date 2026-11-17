@@ -71,7 +71,7 @@ The agent handles both challenges by splitting the work:
   - 4-component weighted grading (quizzes 20%, assignments 30%, projects 25%, exams 25%).
   - Attendance calculations with a 1.5x lab weight and 0.5 credit for late sessions.
   - Progress tracking based on an expected pace of 1 module every 3 weeks from enrollment.
-  - Alert categorization with strict priority ordering (Red $\to$ Yellow $\to$ Green $\to$ Orange).
+  - Alert categorization with strict priority ordering (Red → Yellow → Green → Orange).
 - **Standardized output schema:** Produces four numeric fields scored by RMSE.
 - **Progress checkpointing:** Writes intermediate predictions to disk every 10 queries to prevent progress loss during long runs.
 
@@ -81,37 +81,37 @@ The agent handles both challenges by splitting the work:
 
 ```mermaid
 flowchart TD
-    subgraph Input
-        Q[Incoming Query / Test Item]
+    subgraph Input_Stage["Input"]
+        Q["Incoming Query / Test Item"]
     end
 
-    subgraph Scope & Routing
-        Q --> Router{Out-of-Scope<br/>Detector}
-        Router -- "Irrelevant / Missing Data" --> OOS["answerable = 0<br/>lookup = -1.0<br/>rule = -1.0<br/>final = -1.0"]
-        Router -- "Valid Domain Query" --> Agent[ReAct Agent Loop]
+    subgraph Scope_Routing["Scope & Routing"]
+        Q --> Router{"Out-of-Scope<br/>Detector"}
+        Router -->|"Irrelevant / Missing Data"| OOS["answerable = 0<br/>lookup = -1.0<br/>rule = -1.0<br/>final = -1.0"]
+        Router -->|"Valid Domain Query"| Agent["ReAct Agent Loop"]
     end
 
-    subgraph Knowledge Base
-        Policies[(Policy Documents<br/>Markdown)] --> Chunker[Semantic Chunker]
-        Chunker --> Embedder[Gemini Embeddings]
-        Embedder --> FAISS[(FAISS Vector Store)]
+    subgraph Knowledge_Base["Knowledge Base"]
+        Policies[("Policy Documents<br/>Markdown")] --> Chunker["Semantic Chunker"]
+        Chunker --> Embedder["Gemini Embeddings"]
+        Embedder --> FAISS[("FAISS Vector Store")]
     end
 
-    subgraph Relational Store
-        CSV[(Relational CSVs<br/>Students, Courses, Attendance,<br/>Assessments, Mentors)]
+    subgraph Relational_Store["Relational Store"]
+        CSV[("Relational CSVs<br/>Students, Courses, Attendance,<br/>Assessments, Mentors")]
     end
 
-    subgraph Agent Tools
-        Agent <-->|1. Semantic Query| FAISS
-        Agent <-->|2. Relational Query| CSV
-        Agent --> Calc[Deterministic Math Engine]
-        Calc --> RuleEngine[Policy Priority Evaluator]
+    subgraph Agent_Tools["Agent Tools"]
+        Agent -->|"1. Semantic Query"| FAISS
+        Agent -->|"2. Relational Query"| CSV
+        Agent --> Calc["Deterministic Math Engine"]
+        Calc --> RuleEngine["Policy Priority Evaluator"]
     end
 
-    subgraph Output Formatting
-        RuleEngine --> Parser[JSON / Regex Response Normalizer]
-        Parser --> ValidCheck{Validation Check}
-        ValidCheck --> CSVOut[(submission.csv)]
+    subgraph Output_Formatting["Output Formatting"]
+        RuleEngine --> Parser["JSON / Regex Response Normalizer"]
+        Parser --> ValidCheck{"Validation Check"}
+        ValidCheck --> CSVOut[("submission.csv")]
         OOS --> CSVOut
     end
 ```
@@ -291,15 +291,15 @@ The full implementation runs through [`starter_notebook.ipynb`](starter_notebook
 All temporal calculations use **January 15, 2025** as the fixed reference date.
 
 1. **Grading Policy:**
-   $$\text{Grade} = (\text{Quiz Avg} \times 0.20) + (\text{Assignment Avg} \times 0.30) + (\text{Project Avg} \times 0.25) + (\text{Exam Avg} \times 0.25)$$
+   $$\text{Grade} = (0.20 \times \text{Quiz}) + (0.30 \times \text{Assignment}) + (0.25 \times \text{Project}) + (0.25 \times \text{Exam})$$
    - Missing assessment types default to an average score of `0.0`.
    - Minimum exam score to pass:
-     $$\text{min\_exam\_score} = \frac{\text{passing\_grade} - (0.20 \times \text{quiz} + 0.30 \times \text{assignment} + 0.25 \times \text{project})}{0.25}$$
+     $$\text{Min Exam Score} = \frac{\text{Passing Grade} - (0.20 \times \text{Quiz} + 0.30 \times \text{Assignment} + 0.25 \times \text{Project})}{0.25}$$
 
 2. **Attendance Policy:**
    - Late sessions count as 0.5 present.
    - Labs receive a 1.5x weight multiplier; lectures and mentoring sessions receive 1.0x:
-     $$\text{weighted\_attendance\_pct} = \left(\frac{\sum (\text{present} \times W) + 0.5 \times \sum (\text{late} \times W)}{\sum (\text{all sessions} \times W)}\right) \times 100$$
+     $$\text{Weighted Attendance} = \left(\frac{\sum (\text{Present} \times W) + 0.5 \times \sum (\text{Late} \times W)}{\sum (\text{Total Sessions} \times W)}\right) \times 100$$
    - The minimum required weighted attendance is 75.0%.
 
 3. **Progress Milestones:**
@@ -353,7 +353,8 @@ If a query is out-of-scope or unanswerable, the pipeline returns:
 ### Evaluation Metric
 The benchmark measures prediction accuracy using Root Mean Squared Error (RMSE) across all four columns:
 $$\text{RMSE} = \sqrt{\frac{1}{4N} \sum_{i=1}^{N} \sum_{c \in C} (y_{i,c} - \hat{y}_{i,c})^2}$$
-where $C = \{\text{answerable}, \text{lookup\_value}, \text{rule\_value}, \text{final\_answer}\}$.
+
+where $C$ represents the four evaluation columns: `answerable`, `lookup_value`, `rule_value`, and `final_answer`.
 
 ### Generated Submission Files
 The workspace contains three submission checkpoints for the 50 test queries:
@@ -385,7 +386,7 @@ the 75% minimum attendance requirement? (Yes=1, No=0)
    - Total weighted present credits: 18.5
    - Total weighted sessions: 24.0
    - Attendance rate: 77.08%
-3. **Rule Comparison:** $77.08\% \ge 75.0\% \implies \text{Satisfied (1.0)}$.
+3. **Rule Comparison:** 77.08% ≥ 75.0% → Satisfied (1.0).
 4. **Output Tuple:**
    ```json
    {
